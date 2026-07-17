@@ -1,0 +1,68 @@
+export const site = {
+  name: "Sourav Sharma",
+  role: "Software Engineer",
+  location: "Melbourne, Victoria, Australia",
+  shortLocation: "Melbourne, VIC",
+  email: "sharma-sourav@outlook.com",
+  linkedin: "https://www.linkedin.com/in/sourav-sharma-5026631b0",
+  github: "https://github.com/souravsharm",
+  resumePath: "/Sourav-Sharma-Resume.pdf",
+  heroImage: "/portfolio-hero.png",
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://sourav-sharma.vercel.app",
+  headline: "Software engineer building full-stack, AI, IoT, and cloud-aware solutions.",
+  tagline: "Grow. Build. Repeat.",
+  intro:
+    "I am a Software Engineering Honours graduate based in Melbourne, with experience building responsive web applications, AI-driven prototypes, real-time interfaces, API integrations, WordPress and SEO improvements, and IoT/robotics systems.",
+  positioning:
+    "I build practical web, AI, IoT, and automation systems that turn messy real-world requirements into usable software.",
+  about: [
+    "I am Sourav Sharma, a Software Engineering Honours graduate from Deakin University with a specialization in Internet of Things, Robotics, and Cyber-Physical Systems. My work sits at the intersection of practical software engineering and real-world problem solving: web applications, AI workflows, IoT systems, API integrations, automation, and cloud-aware architecture.",
+    "Across internships and projects, I have worked on responsive interfaces, REST API integrations, WordPress performance and SEO improvements, AI model pipelines, real-time WebSocket interfaces, and hardware-connected systems using Raspberry Pi, sensors, and robotics tools.",
+    "I am currently focused on full-stack development, frontend engineering, practical AI tools, education technology, internal tools, MVP development, and automation systems.",
+  ],
+  stats: [
+    { value: 94, suffix: "%", label: "ML model accuracy reached on the CKD prognosis project" },
+    { value: 20, suffix: "%", label: "Site performance uplift via Core Web Vitals improvements" },
+    { value: 10, suffix: "+", label: "REST APIs integrated across internship projects" },
+  ],
+  strengths: [
+    "Full-stack development",
+    "AI and ML prototypes",
+    "IoT and robotics",
+    "REST API integration",
+    "SEO and performance",
+    "AWS architecture fundamentals",
+  ],
+  nav: [
+    { label: "About", href: "#about" },
+    { label: "Projects", href: "#projects" },
+    { label: "Experience", href: "#experience" },
+    { label: "Skills", href: "#skills" },
+    { label: "Education", href: "#education" },
+    { label: "Contact", href: "#contact" },
+  ],
+  services: [
+    "MVPs and internal tools using React, Next.js, Node.js, and REST APIs",
+    "Practical AI features such as summarization, classification, retrieval assistants, and explainable predictions",
+    "API integrations and workflow automation",
+    "WordPress performance, SEO, structured data, and technical website improvements",
+    "Frontend interfaces for dashboards, booking systems, education tools, and data-heavy applications",
+  ],
+  seo: {
+    title: "Sourav Sharma | Software Engineer",
+    description:
+      "Full-stack software engineer based in Melbourne, building web, AI, IoT, robotics, and cloud-aware solutions.",
+    keywords: [
+      "Sourav Sharma",
+      "Software Engineer Melbourne",
+      "Full Stack Developer",
+      "React Developer",
+      "Next.js Developer",
+      "AI Developer",
+      "IoT",
+      "Robotics",
+      "AWS",
+      "WordPress SEO",
+    ],
+  },
+} as const;
