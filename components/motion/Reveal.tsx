@@ -3,18 +3,17 @@
 import { motion, type Variants } from "framer-motion";
 import { useSafeReducedMotion } from "@/lib/useSafeReducedMotion";
 
+const EASE = [0.16, 1, 0.3, 1] as const;
+
 type RevealProps = {
   children: React.ReactNode;
   className?: string;
-  as?: "div" | "section";
+  as?: "div" | "section" | "li" | "article";
   delay?: number;
   y?: number;
-  once?: boolean;
 };
 
-const EASE = [0.16, 1, 0.3, 1] as const;
-
-export function Reveal({ children, className, as = "div", delay = 0, y = 28, once = true }: RevealProps) {
+export function Reveal({ children, className, as = "div", delay = 0, y = 24 }: RevealProps) {
   const reduceMotion = useSafeReducedMotion();
   const Component = motion[as];
 
@@ -23,59 +22,64 @@ export function Reveal({ children, className, as = "div", delay = 0, y = 28, onc
       className={className}
       initial={reduceMotion ? undefined : { opacity: 0, y }}
       whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-      viewport={{ once, amount: 0.2 }}
-      transition={{ duration: 0.7, delay, ease: EASE }}
+      viewport={{ once: true, amount: 0.15 }}
+      transition={{ duration: 0.8, delay, ease: EASE }}
     >
       {children}
     </Component>
   );
 }
 
-export const staggerContainer: Variants = {
+const container: Variants = {
   hidden: {},
-  show: {
-    transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.05,
-    },
-  },
+  show: { transition: { staggerChildren: 0.07, delayChildren: 0.04 } },
 };
 
-export const staggerItem: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE } },
+const item: Variants = {
+  hidden: { opacity: 0, y: 22 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE } },
 };
 
 export function RevealGroup({
   children,
   className,
-  once = true,
+  as = "div",
 }: {
   children: React.ReactNode;
   className?: string;
-  once?: boolean;
+  as?: "div" | "dl" | "ul" | "ol";
 }) {
   const reduceMotion = useSafeReducedMotion();
+  const Component = motion[as];
 
   return (
-    <motion.div
+    <Component
       className={className}
       initial={reduceMotion ? undefined : "hidden"}
       whileInView={reduceMotion ? undefined : "show"}
-      viewport={{ once, amount: 0.2 }}
-      variants={staggerContainer}
+      viewport={{ once: true, amount: 0.12 }}
+      variants={container}
     >
       {children}
-    </motion.div>
+    </Component>
   );
 }
 
-export function RevealItem({ children, className }: { children: React.ReactNode; className?: string }) {
+export function RevealItem({
+  children,
+  className,
+  as = "div",
+}: {
+  children: React.ReactNode;
+  className?: string;
+  as?: "div" | "li";
+}) {
   const reduceMotion = useSafeReducedMotion();
+  const Component = motion[as];
 
   return (
-    <motion.div className={className} variants={reduceMotion ? undefined : staggerItem}>
+    <Component className={className} variants={reduceMotion ? undefined : item}>
       {children}
-    </motion.div>
+    </Component>
   );
 }

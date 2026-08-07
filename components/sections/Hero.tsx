@@ -1,162 +1,154 @@
 "use client";
 
-import { ArrowDown, ArrowRight, Download, MapPin } from "lucide-react";
-import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { ArrowDown, ArrowUpRight, FileText, MapPin } from "lucide-react";
+import dynamic from "next/dynamic";
+import { useRef } from "react";
 import { motion } from "framer-motion";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
-import { cn } from "@/lib/utils";
+import { StatusPill } from "@/components/ui/Tag";
+import { Scene3D } from "@/components/three/Scene3D";
 import { site } from "@/content/site";
-import { gsap } from "@/lib/gsap";
-import { useMediaQuery } from "@/lib/useMediaQuery";
-import { useSafeReducedMotion } from "@/lib/useSafeReducedMotion";
+import { useScrollProgress } from "@/lib/useScrollProgress";
 
-const mottoWords = site.tagline.split(" ");
+// WebGL never runs on the server, and keeping three out of the initial bundle
+// means the text above the fold paints without waiting for it.
+const HeroScene = dynamic(() => import("@/components/three/HeroScene"), { ssr: false });
+
 const EASE = [0.16, 1, 0.3, 1] as const;
+
+/** Static stand-in for the 3D core: same silhouette, no WebGL. */
+function CoreFallback() {
+  return (
+    <div aria-hidden className="relative h-full w-full">
+      <div className="absolute left-1/2 top-1/2 h-[62%] w-[62%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle_at_35%_30%,rgb(var(--accent)/0.5),rgb(var(--accent-2)/0.22)_45%,transparent_70%)] blur-[2px]" />
+      {[0.52, 0.72, 0.92].map((size, index) => (
+        <div
+          key={size}
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-line"
+          style={{
+            width: `${size * 100}%`,
+            height: `${size * 100}%`,
+            transform: `translate(-50%, -50%) rotateX(${62 + index * 6}deg) rotateZ(${index * 24}deg)`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 export function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
-  const mottoLayerRef = useRef<HTMLDivElement>(null);
-  const identityLayerRef = useRef<HTMLDivElement>(null);
-  const reduceMotion = useSafeReducedMotion();
-  const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const pinEnabled = isDesktop && !reduceMotion;
-
-  useEffect(() => {
-    if (!pinEnabled) return;
-
-    const ctx = gsap.context(() => {
-      gsap.set(identityLayerRef.current, { autoAlpha: 0, y: 60 });
-      gsap.set(mottoLayerRef.current, { autoAlpha: 1, scale: 1, y: 0 });
-
-      const timeline = gsap.timeline({
-        scrollTrigger: {
-          id: "hero-pin",
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "+=100%",
-          scrub: 0.6,
-          pin: true,
-          anticipatePin: 1,
-          invalidateOnRefresh: true,
-        },
-      });
-
-      // Sequence with a clean handoff: motto fully exits before identity enters,
-      // so the two very different layouts never render on top of each other.
-      timeline
-        .to(mottoLayerRef.current, { autoAlpha: 0, scale: 0.86, y: -60, ease: "power1.in", duration: 0.4 }, 0)
-        .to(identityLayerRef.current, { autoAlpha: 1, y: 0, ease: "power1.out", duration: 0.4 }, 0.5);
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, [pinEnabled]);
+  const progress = useScrollProgress(sectionRef, { start: "top top", end: "bottom top" });
 
   return (
-    <section id="top" ref={sectionRef} className="relative overflow-hidden border-b border-border">
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute left-1/2 top-1/4 h-[36rem] w-[36rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/25 blur-[130px]" />
-        <div className="absolute right-0 bottom-0 h-[26rem] w-[26rem] translate-x-1/3 translate-y-1/3 rounded-full bg-accent/10 blur-[120px]" />
+    <section id="top" ref={sectionRef} className="relative min-h-[100svh] overflow-hidden">
+      {/* The scene sits behind the copy on small screens and beside it on large. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-0 opacity-70 sm:opacity-100 lg:left-[42%]"
+      >
+        <Scene3D fallback={<CoreFallback />}>
+          <HeroScene progress={progress} />
+        </Scene3D>
       </div>
 
-      <div className={cn("relative flex flex-col", pinEnabled && "lg:h-[100svh]")}>
-        <div
-          ref={mottoLayerRef}
-          className={cn(
-            "flex min-h-[100svh] flex-col items-center justify-center px-6 text-center",
-            pinEnabled && "lg:absolute lg:inset-0",
-          )}
-        >
-          <p
-            aria-hidden
-            className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-5xl font-bold leading-none tracking-tight text-foreground sm:text-7xl lg:text-8xl"
-          >
-            {mottoWords.map((word, index) => (
-              <motion.span
-                key={word}
-                initial={reduceMotion ? undefined : { opacity: 0, y: 40 }}
-                animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.15 * index, ease: EASE }}
-                className={index === mottoWords.length - 1 ? "text-gradient" : undefined}
-              >
-                {word}
-              </motion.span>
-            ))}
-          </p>
+      <Container className="relative z-10 flex min-h-[100svh] flex-col justify-center pb-28 pt-28">
+        <div className="max-w-4xl">
           <motion.div
-            initial={reduceMotion ? undefined : { opacity: 0 }}
-            animate={reduceMotion ? undefined : { opacity: 1 }}
-            transition={{ delay: 1, duration: 0.8 }}
-            className="mt-12 flex items-center gap-2 text-sm text-muted"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: EASE }}
           >
-            <span>Scroll to explore</span>
-            <ArrowDown aria-hidden className="h-4 w-4 animate-bounce" />
+            <StatusPill>{site.availability}</StatusPill>
           </motion.div>
+
+          <h1 className="mt-6 font-display text-display-xl font-semibold text-fg">
+            <motion.span
+              className="block"
+              initial={{ opacity: 0, y: 34 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.1, ease: EASE }}
+            >
+              {site.headline.lead}
+            </motion.span>
+            <motion.span
+              className="block text-gradient"
+              initial={{ opacity: 0, y: 34 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.22, ease: EASE }}
+            >
+              {site.headline.emphasis}
+            </motion.span>
+          </h1>
+
+          <motion.p
+            className="mt-7 max-w-measure text-lead text-muted"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, delay: 0.38, ease: EASE }}
+          >
+            {site.intro}
+          </motion.p>
+
+          <motion.div
+            className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, delay: 0.5, ease: EASE }}
+          >
+            <Button href="#work" variant="primary" size="lg" icon={<ArrowUpRight aria-hidden className="h-4 w-4" />}>
+              See the work
+            </Button>
+            <Button
+              href={site.resumePath}
+              newTab
+              size="lg"
+              icon={<ArrowUpRight aria-hidden className="h-4 w-4" />}
+            >
+              <FileText aria-hidden className="mr-1 inline h-4 w-4 align-[-3px]" />
+              View résumé
+            </Button>
+          </motion.div>
+
+          <motion.p
+            className="mt-8 flex items-center gap-2 font-mono text-xs text-dim"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.9, delay: 0.66 }}
+          >
+            <MapPin aria-hidden className="h-3.5 w-3.5" />
+            {site.location}
+          </motion.p>
         </div>
+      </Container>
 
-        <div
-          ref={identityLayerRef}
-          className={cn("min-h-[100svh]", pinEnabled && "lg:absolute lg:inset-0")}
-        >
-          <div className="absolute inset-0 -z-10">
-            <Image
-              src={site.heroImage}
-              alt=""
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover opacity-20"
-            />
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgb(var(--background))_0%,rgb(var(--background)/0.92)_35%,rgb(var(--background)/0.7)_100%)]" />
+      {/* Stack ticker, pinned to the bottom edge of the viewport. */}
+      <div className="absolute inset-x-0 bottom-0 z-10 border-y border-line bg-bg/60 backdrop-blur-sm">
+        <div className="marquee-mask flex overflow-hidden py-3.5 [--marquee-duration:38s]">
+          <div className="marquee-track flex w-max shrink-0 items-center">
+            {[...site.marquee, ...site.marquee].map((item, index) => (
+              <span key={`${item}-${index}`} className="flex items-center">
+                <span className="whitespace-nowrap px-6 font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-dim">
+                  {item}
+                </span>
+                <span className="h-1 w-1 rounded-full bg-line" aria-hidden />
+              </span>
+            ))}
           </div>
-          <Container className="grid min-h-[100svh] items-center gap-10 py-14 lg:grid-cols-[1fr_0.82fr] lg:py-16">
-            <div className="min-w-0 max-w-[21.5rem] sm:max-w-3xl">
-              <Badge className="items-start gap-2 text-left">
-                <MapPin aria-hidden className="h-3.5 w-3.5 text-accent" />
-                <span className="min-w-0 break-words">{site.shortLocation} / Software Engineering Honours Graduate</span>
-              </Badge>
-              <h1 className="mt-6 max-w-full text-[2.1rem] font-bold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-                <span className="block">Software engineer</span>
-                <span className="block">building full-stack,</span>
-                <span className="block">AI, IoT, and</span>
-                <span className="block">cloud-aware solutions.</span>
-              </h1>
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-muted">{site.intro}</p>
-              <div className="mt-5 flex flex-wrap gap-2 md:hidden">
-                {site.strengths.slice(0, 4).map((strength) => (
-                  <span key={strength} className="rounded-full border border-border bg-panel/80 px-2.5 py-1 text-xs font-medium text-muted">
-                    {strength}
-                  </span>
-                ))}
-              </div>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <Button href="#projects" variant="primary" icon={<ArrowRight aria-hidden className="h-4 w-4" />}>
-                  View Projects
-                </Button>
-                <Button href={site.resumePath} download icon={<Download aria-hidden className="h-4 w-4" />}>
-                  Download Resume
-                </Button>
-                <Button href={`mailto:${site.email}`} variant="ghost">
-                  Contact Me
-                </Button>
-              </div>
-            </div>
-
-            <div className="hidden min-w-0 gap-4 rounded-2xl border border-border bg-background/76 p-5 shadow-soft backdrop-blur-xl md:grid">
-              <p className="text-sm font-semibold uppercase tracking-normal text-accent">Core Range</p>
-              <div className="grid gap-3 md:grid-cols-2">
-                {site.strengths.map((strength) => (
-                  <div key={strength} className="min-w-0 rounded-xl border border-border bg-panel/80 p-4 text-sm font-medium text-foreground">
-                    {strength}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Container>
         </div>
       </div>
+
+      <motion.div
+        aria-hidden
+        className="absolute bottom-20 right-[var(--shell-pad)] z-10 hidden items-center gap-2 font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-dim lg:flex"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.2, duration: 0.8 }}
+      >
+        Scroll
+        <ArrowDown className="h-3.5 w-3.5 animate-bounce" />
+      </motion.div>
     </section>
   );
 }

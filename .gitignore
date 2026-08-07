@@ -1,5 +1,10 @@
 node_modules
 .next
+
+# Local editor / assistant state — never belongs in the repo
+.claude/
+.cursor/
+.aider*
 *.tsbuildinfo
 out
 dist

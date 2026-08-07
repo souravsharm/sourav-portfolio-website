@@ -1,17 +1,25 @@
 "use client";
 
 import { Check, Copy } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { site } from "@/content/site";
 import { cn } from "@/lib/utils";
 
 export function CopyEmailButton({ className }: { className?: string }) {
   const [copied, setCopied] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => () => clearTimeout(timer.current), []);
 
   async function copyEmail() {
-    await navigator.clipboard.writeText(site.email);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1800);
+    try {
+      await navigator.clipboard.writeText(site.email);
+      setCopied(true);
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => setCopied(false), 1900);
+    } catch {
+      // Clipboard access can be blocked; the address is on screen either way.
+    }
   }
 
   return (
@@ -19,13 +27,12 @@ export function CopyEmailButton({ className }: { className?: string }) {
       type="button"
       onClick={copyEmail}
       className={cn(
-        "inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-border bg-panel px-4 py-2 text-sm font-semibold text-foreground transition hover:border-accent/70 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
+        "inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-line bg-elevated/60 px-5 text-sm text-muted transition-colors hover:border-lineStrong hover:text-fg",
         className,
       )}
     >
-      {copied ? <Check aria-hidden className="h-4 w-4" /> : <Copy aria-hidden className="h-4 w-4" />}
-      {copied ? "Copied" : "Copy Email"}
+      {copied ? <Check aria-hidden className="h-4 w-4 text-mint" /> : <Copy aria-hidden className="h-4 w-4" />}
+      {copied ? "Copied" : "Copy email"}
     </button>
   );
 }
-
