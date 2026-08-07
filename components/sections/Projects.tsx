@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, ArrowUpRight, ExternalLink, FileText, Github, Pl
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Container } from "@/components/ui/Container";
 import { SectionHeader } from "@/components/layout/Section";
+import { ProjectPoster } from "@/components/visuals/ProjectPoster";
 import { ProjectVisual } from "@/components/visuals/ProjectVisual";
 import { projects, type Project } from "@/content/projects";
 import { cn } from "@/lib/utils";
@@ -102,9 +103,20 @@ function ProjectCard({ project, index, total }: { project: Project; index: numbe
           {/* Centred in whatever height is left over, so a short card and a tall
               card both look composed rather than top-heavy. */}
           <div className="flex flex-1 items-center">
-            {/* No max-height: capping it would break the aspect ratio and the
+            {/* Real artwork wins over the generated diagram — a photograph of
+                the thing running beats an illustration of how it works.
+                No max-height: capping it would break the aspect ratio and the
                 SVG would letterbox itself inside a too-wide box. */}
-            <ProjectVisual variant={project.visual} className="aspect-[400/240] w-full" />
+            {project.image ? (
+              <ProjectPoster
+                src={project.image.src}
+                alt={project.image.alt}
+                videoHref={project.image.videoHref}
+                className="aspect-[400/240] w-full"
+              />
+            ) : (
+              <ProjectVisual variant={project.visual} className="aspect-[400/240] w-full" />
+            )}
           </div>
 
           {project.metrics ? (

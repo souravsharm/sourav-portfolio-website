@@ -50,6 +50,11 @@ export type Project = {
   /** Capability areas — cross-links a project to the skills section. */
   areas: string[];
   links: Array<{ label: string; href: string; kind: "live" | "code" | "paper" | "video" }>;
+  /**
+   * Real artwork, where it exists. Takes precedence over `visual`. Setting
+   * `videoHref` turns the whole poster into the play control.
+   */
+  image?: { src: string; alt: string; videoHref?: string };
   visual: ProjectVisual;
   theme: ProjectTheme;
 };
@@ -210,8 +215,14 @@ export const projects: Project[] = [
     tech: ["Python", "Keras", "ROS2", "JavaScript", "WebSockets", "DJI Tellopy"],
     areas: ["Data & AI", "Real-time", "Robotics"],
     links: [
+      { label: "Watch the drone demo", href: "https://youtu.be/Dv5XkQuXW5Q", kind: "video" },
       { label: "View source on GitHub", href: "https://github.com/souravsharm/TelloDrone-GestureDetection", kind: "code" },
     ],
+    image: {
+      src: "/TelloDrone.png",
+      alt: "The DJI Tello in flight above a mission-pad mat, overlaid with navigation telemetry",
+      videoHref: "https://youtu.be/Dv5XkQuXW5Q",
+    },
     visual: "drone",
     theme: {
       // Electric violet.
