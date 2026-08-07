@@ -12,3 +12,8 @@ import { useMediaQuery } from "@/lib/useMediaQuery";
 export function useSafeReducedMotion() {
   return useMediaQuery("(prefers-reduced-motion: reduce)");
 }
+
+/** True once the viewport is wide enough to justify the heavier scenes. */
+export function useIsDesktop() {
+  return useMediaQuery("(min-width: 1024px)");
+}

@@ -3,38 +3,47 @@
 import { motion, useMotionValue, useSpring } from "framer-motion";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useSafeReducedMotion } from "@/lib/useSafeReducedMotion";
 
 type ButtonProps = {
   href: string;
   children: React.ReactNode;
   className?: string;
   variant?: "primary" | "secondary" | "ghost";
+  size?: "md" | "lg";
   icon?: React.ReactNode;
-  download?: boolean;
-  external?: boolean;
+  /** Force a plain anchor that opens in a new tab (the PDF viewer, mainly). */
+  newTab?: boolean;
 };
 
 const variants = {
   primary:
-    "border-accent bg-accent text-white shadow-soft hover:bg-accent/90 hover:border-accent/90",
-  secondary:
-    "border-border bg-panel text-foreground hover:border-accent/70 hover:text-accent",
-  ghost:
-    "border-transparent bg-transparent text-muted hover:text-foreground hover:bg-panel/70",
+    "border-transparent bg-fg text-bg hover:bg-white shadow-[0_18px_45px_-22px_rgb(var(--accent)/0.9)]",
+  secondary: "border-line bg-elevated/70 text-fg hover:border-lineStrong hover:bg-elevated",
+  ghost: "border-transparent bg-transparent text-muted hover:text-fg hover:bg-elevated/60",
 };
 
+const sizes = {
+  md: "min-h-11 px-5 text-sm",
+  lg: "min-h-[3.25rem] px-7 text-[0.95rem]",
+};
+
+// Module scope: creating this inside the component would produce a new
+// component type on every render and remount the link each time.
 const MotionLink = motion.create(Link);
 
-function useMagnetic() {
+/** Subtle magnetic pull toward the cursor — the tell of a considered site. */
+function useMagnetic(disabled: boolean) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const springX = useSpring(x, { stiffness: 250, damping: 18, mass: 0.4 });
-  const springY = useSpring(y, { stiffness: 250, damping: 18, mass: 0.4 });
+  const springX = useSpring(x, { stiffness: 220, damping: 20, mass: 0.4 });
+  const springY = useSpring(y, { stiffness: 220, damping: 20, mass: 0.4 });
 
   function onMouseMove(event: React.MouseEvent<HTMLElement>) {
+    if (disabled) return;
     const bounds = event.currentTarget.getBoundingClientRect();
-    x.set((event.clientX - bounds.left - bounds.width / 2) * 0.25);
-    y.set((event.clientY - bounds.top - bounds.height / 2) * 0.5);
+    x.set((event.clientX - bounds.left - bounds.width / 2) * 0.18);
+    y.set((event.clientY - bounds.top - bounds.height / 2) * 0.3);
   }
 
   function onMouseLeave() {
@@ -50,44 +59,54 @@ export function Button({
   children,
   className,
   variant = "secondary",
+  size = "md",
   icon,
-  download,
-  external,
+  newTab,
 }: ButtonProps) {
-  const { springX, springY, onMouseMove, onMouseLeave } = useMagnetic();
+  const reduceMotion = useSafeReducedMotion();
+  const { springX, springY, onMouseMove, onMouseLeave } = useMagnetic(reduceMotion);
+
   const classes = cn(
-    "inline-flex min-h-11 items-center justify-center gap-2 rounded-full border px-5 py-2 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
+    "group/btn relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full border font-medium transition-colors duration-300",
     variants[variant],
+    sizes[size],
     className,
   );
 
   const motionProps = {
-    style: { x: springX, y: springY },
+    style: reduceMotion ? undefined : { x: springX, y: springY },
     onMouseMove,
     onMouseLeave,
-    whileTap: { scale: 0.96 },
+    whileTap: { scale: 0.97 },
   };
 
-  if (external || href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("tel:")) {
+  const inner = (
+    <>
+      <span className="relative z-10 whitespace-nowrap">{children}</span>
+      {icon ? <span className="relative z-10 transition-transform duration-300 group-hover/btn:translate-x-0.5">{icon}</span> : null}
+    </>
+  );
+
+  const isExternal = /^(https?:|mailto:|tel:)/.test(href);
+
+  if (isExternal || newTab) {
+    const opensNewTab = newTab || href.startsWith("http");
     return (
       <motion.a
         className={classes}
         href={href}
-        download={download}
-        rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
-        target={href.startsWith("http") ? "_blank" : undefined}
+        target={opensNewTab ? "_blank" : undefined}
+        rel={opensNewTab ? "noopener noreferrer" : undefined}
         {...motionProps}
       >
-        {icon}
-        {children}
+        {inner}
       </motion.a>
     );
   }
 
   return (
-    <MotionLink className={classes} href={href} download={download} {...motionProps}>
-      {icon}
-      {children}
+    <MotionLink className={classes} href={href} {...motionProps}>
+      {inner}
     </MotionLink>
   );
 }

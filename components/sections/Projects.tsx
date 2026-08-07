@@ -1,140 +1,336 @@
 "use client";
 
-import { ExternalLink, ImageIcon } from "lucide-react";
-import { motion } from "framer-motion";
-import Image from "next/image";
-import { Badge } from "@/components/ui/Badge";
+import { ArrowLeft, ArrowRight, ArrowUpRight, ExternalLink, FileText, Github, Play } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Container } from "@/components/ui/Container";
-import { Reveal } from "@/components/motion/Reveal";
+import { SectionHeader } from "@/components/layout/Section";
+import { ProjectVisual } from "@/components/visuals/ProjectVisual";
 import { projects, type Project } from "@/content/projects";
-import { useSafeReducedMotion } from "@/lib/useSafeReducedMotion";
+import { cn } from "@/lib/utils";
 
-function ProjectCard({ project }: { project: Project }) {
+const linkIcons = {
+  live: ExternalLink,
+  code: Github,
+  paper: FileText,
+  video: Play,
+} as const;
+
+/** Every card carries its own palette and title face via CSS custom properties. */
+function themeVars(project: Project) {
+  return {
+    "--c-accent": project.theme.accent,
+    "--c-accent-2": project.theme.accentAlt,
+    "--c-left": project.theme.left,
+    "--c-right": project.theme.right,
+    "--c-text": project.theme.text,
+    "--c-muted": project.theme.muted,
+    "--c-font": project.theme.font,
+  } as React.CSSProperties;
+}
+
+function ProjectCard({ project, index, total }: { project: Project; index: number; total: number }) {
+  const primaryLink = project.links[0];
+  const PrimaryIcon = linkIcons[primaryLink.kind];
+
   return (
-    <motion.article
-      whileHover={{ y: -8 }}
-      transition={{ type: "spring", stiffness: 300, damping: 24 }}
-      className="group/card relative mr-6 flex w-[86vw] shrink-0 flex-col gap-5 overflow-hidden rounded-2xl border border-border bg-panel/86 p-6 shadow-line transition-colors hover:border-accent/60 sm:w-[380px] lg:w-[400px]"
+    <article
+      style={themeVars(project)}
+      className="w-full shrink-0 snap-center overflow-hidden rounded-2xl border border-line shadow-card"
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-accent/0 blur-3xl transition-colors duration-500 group-hover/card:bg-accent/15"
-      />
-
-      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-border bg-background/60">
-        {project.image ? (
-          <Image
-            src={project.image}
-            alt={`${project.title} preview`}
-            fill
-            sizes="(max-width: 640px) 86vw, 400px"
-            className="object-cover transition-transform duration-500 group-hover/card:scale-105"
-          />
-        ) : (
-          <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-[radial-gradient(ellipse_at_center,rgb(var(--accent)/0.12),transparent_70%)] text-muted">
-            <ImageIcon aria-hidden className="h-6 w-6" />
-            <span className="text-xs font-medium">Project image</span>
-          </div>
-        )}
-      </div>
-
-      <div>
-        <div className="mb-4 flex flex-wrap gap-2">
-          {project.tags.slice(0, 3).map((tag) => (
-            <Badge key={tag}>{tag}</Badge>
-          ))}
-        </div>
-        <h3 className="text-xl font-bold leading-tight text-foreground">{project.title}</h3>
-        <p className="mt-3 text-sm leading-6 text-muted">{project.summary}</p>
-      </div>
-
-      <div className="grid gap-2 text-sm text-muted">
-        <p className="font-semibold text-foreground">Technical approach</p>
-        <ul className="grid gap-2">
-          {project.approach.slice(0, 2).map((item) => (
-            <li key={item} className="border-l border-accent/60 pl-3 leading-6">
-              {item}
-            </li>
-          ))}
-        </ul>
-        {project.outcome ? (
-          <p className="mt-1">
-            <span className="font-semibold text-foreground">Outcome: </span>
-            {project.outcome}
-          </p>
-        ) : null}
-      </div>
-
-      <div className="mt-auto">
-        <div className="mb-4 flex flex-wrap gap-2">
-          {project.tech.slice(0, 5).map((tech) => (
-            <span key={tech} className="rounded-full bg-accentSoft px-2.5 py-1 text-xs font-medium text-foreground">
-              {tech}
+      {/* h-full so both columns fill the tallest card in the track — otherwise
+          the shorter card's panels stop short and the page shows through. */}
+      <div className="grid h-full lg:grid-cols-[1.06fr_0.94fr]">
+        {/* Text column */}
+        <div className="order-2 flex flex-col bg-[rgb(var(--c-left))] p-6 sm:p-7 lg:order-1 lg:p-8">
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-[0.6875rem] tabular-nums text-card">
+              {String(index + 1).padStart(2, "0")}
             </span>
-          ))}
+            <span className="h-px w-6 bg-[rgb(var(--c-accent)/0.4)]" aria-hidden />
+            <span className="font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-[rgb(var(--c-muted)/0.7)]">
+              {project.year}
+            </span>
+          </div>
+
+          <h3 className="mt-3 font-cardTitle text-[clamp(1.375rem,1.15rem+0.85vw,1.875rem)] font-semibold leading-tight tracking-tight text-[rgb(var(--c-text))]">
+            {project.title}
+          </h3>
+          <p className="mt-1.5 text-[0.8125rem] text-[rgb(var(--c-accent)/0.85)]">{project.kind}</p>
+          <p className="mt-3.5 text-[1rem] leading-[1.55] text-[rgb(var(--c-muted))]">{project.summary}</p>
+
+          <div className="mt-5 grid gap-4 border-t border-[rgb(var(--c-accent)/0.16)] pt-5">
+            <div>
+              <p className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-[rgb(var(--c-muted)/0.65)]">
+                The problem
+              </p>
+              <p className="mt-1.5 text-[0.875rem] leading-[1.55] text-[rgb(var(--c-muted))]">{project.problem}</p>
+            </div>
+            <div>
+              <p className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-[rgb(var(--c-muted)/0.65)]">
+                What I built
+              </p>
+              <ul className="mt-1.5 grid gap-1.5">
+                {project.build.map((item) => (
+                  <li key={item} className="flex gap-2.5 text-[0.875rem] leading-[1.55] text-[rgb(var(--c-muted))]">
+                    <span aria-hidden className="mt-[0.45rem] h-1 w-1 shrink-0 rounded-full bg-card" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            {project.outcome ? (
+              <p className="rounded-lg border-l-2 border-card bg-[rgb(var(--c-accent)/0.07)] px-3.5 py-2.5 text-[0.875rem] leading-[1.55] text-[rgb(var(--c-text))]">
+                {project.outcome}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="mt-auto flex flex-wrap gap-1.5 pt-5">
+            {project.tech.map((tech) => (
+              <span
+                key={tech}
+                className="inline-flex items-center whitespace-nowrap rounded-md border border-[rgb(var(--c-accent)/0.22)] bg-[rgb(var(--c-accent)/0.07)] px-2 py-1 font-mono text-[0.6875rem] leading-none text-[rgb(var(--c-accent)/0.95)]"
+              >
+                {tech}
+              </span>
+            ))}
+          </div>
         </div>
-        {project.links.map((link) => (
-          <a
-            key={link.href}
-            href={link.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent"
-          >
-            {link.label}
-            <ExternalLink
-              aria-hidden
-              className="h-4 w-4 -translate-x-1 opacity-0 transition-all duration-300 group-hover/card:translate-x-0 group-hover/card:opacity-100"
-            />
-          </a>
-        ))}
+
+        {/* Visual column */}
+        <div className="order-1 flex flex-col gap-5 border-b border-line bg-[rgb(var(--c-right))] p-6 sm:p-7 lg:order-2 lg:border-b-0 lg:border-l lg:p-8">
+          {/* Centred in whatever height is left over, so a short card and a tall
+              card both look composed rather than top-heavy. */}
+          <div className="flex flex-1 items-center">
+            {/* No max-height: capping it would break the aspect ratio and the
+                SVG would letterbox itself inside a too-wide box. */}
+            <ProjectVisual variant={project.visual} className="aspect-[400/240] w-full" />
+          </div>
+
+          {project.metrics ? (
+            <dl className="grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-[rgb(var(--c-accent)/0.18)] bg-[rgb(var(--c-accent)/0.18)]">
+              {project.metrics.map((metric) => (
+                <div key={metric.label} className="bg-[rgb(var(--c-right))] px-3 py-3 text-center">
+                  <dt className="sr-only">{metric.label}</dt>
+                  <dd>
+                    <span className="block font-cardTitle text-[1.0625rem] font-semibold leading-none text-card">
+                      {metric.value}
+                    </span>
+                    <span className="mt-1.5 block font-mono text-[0.625rem] uppercase tracking-[0.1em] text-[rgb(var(--c-muted)/0.7)]">
+                      {metric.label}
+                    </span>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+
+          {/* Links live here, at the visual end of the card, so the call to
+              action is never below the fold of a long text column. */}
+          <div className="flex flex-col gap-2">
+            <a
+              href={primaryLink.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group/link inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-card px-6 text-[0.875rem] font-semibold text-bg transition-transform duration-300 hover:-translate-y-0.5"
+            >
+              <PrimaryIcon aria-hidden className="h-4 w-4" />
+              {primaryLink.label}
+              <ArrowUpRight
+                aria-hidden
+                className="h-4 w-4 transition-transform duration-300 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5"
+              />
+            </a>
+
+            {project.links.slice(1).map((link) => {
+              const Icon = linkIcons[link.kind];
+              return (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group/link inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-[rgb(var(--c-accent)/0.35)] px-6 text-[0.875rem] text-[rgb(var(--c-accent))] transition-colors duration-300 hover:bg-[rgb(var(--c-accent)/0.1)]"
+                >
+                  <Icon aria-hidden className="h-4 w-4" />
+                  {link.label}
+                  <ArrowUpRight
+                    aria-hidden
+                    className="h-4 w-4 transition-transform duration-300 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5"
+                  />
+                </a>
+              );
+            })}
+
+            <p className="text-center font-mono text-[0.625rem] uppercase tracking-[0.14em] text-[rgb(var(--c-muted)/0.7)]">
+              {project.areas.join(" · ")} — {String(index + 1).padStart(2, "0")}/{String(total).padStart(2, "0")}
+            </p>
+          </div>
+        </div>
       </div>
-    </motion.article>
+    </article>
   );
 }
 
 export function Projects() {
-  const reduceMotion = useSafeReducedMotion();
-  // Duplicate the list so the translateX(-50%) loop is seamless. Each card owns
-  // its trailing margin (mr-6), so the two copies are exactly equal width.
-  const looped = [...projects, ...projects];
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [index, setIndex] = useState(0);
+
+  const goTo = useCallback((target: number) => {
+    const track = trackRef.current;
+    if (!track) return;
+    const clamped = Math.max(0, Math.min(projects.length - 1, target));
+    // Scroll by whole slide widths — every card is exactly the track's width.
+    track.scrollTo({ left: clamped * track.clientWidth, behavior: "smooth" });
+  }, []);
+
+  // The scroll position is the source of truth, so a swipe and an arrow press
+  // both end up updating the same state.
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    let frame = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        setIndex(Math.round(track.scrollLeft / track.clientWidth));
+      });
+    };
+
+    track.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      track.removeEventListener("scroll", onScroll);
+    };
+  }, []);
+
+  const atStart = index === 0;
+  const atEnd = index === projects.length - 1;
 
   return (
-    <section id="projects" className="scroll-mt-24 overflow-hidden bg-panel/30 py-20 sm:py-28">
+    <section id="work" className="relative scroll-mt-24 py-20 sm:py-24 lg:py-28">
       <Container>
-        <Reveal className="mb-10 max-w-3xl sm:mb-14">
-          <Badge>Featured Work</Badge>
-          <h2 className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
-            Projects with technical depth and real implementation detail.
-          </h2>
-          <p className="mt-4 text-base leading-7 text-muted sm:text-lg">
-            Selected work spanning real-time interfaces, explainable AI, API integration, robotics, and IoT automation.
-          </p>
-        </Reveal>
-      </Container>
+        <div className="flex flex-wrap items-end justify-between gap-8">
+          <SectionHeader
+            index="01"
+            eyebrow="Selected work"
+            tone="amber"
+            title="Six things I built, and what each one had to solve."
+            highlight="what each one had to solve."
+            intro="Every project here is live, published, or open source — the link on each card goes straight to it."
+            className="max-w-2xl"
+          />
 
-      {reduceMotion ? (
-        <Container>
-          <div className="flex gap-6 overflow-x-auto pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {projects.map((project) => (
-              <ProjectCard key={project.title} project={project} />
-            ))}
-          </div>
-        </Container>
-      ) : (
-        <div
-          className="group relative flex overflow-hidden py-4 [--marquee-duration:48s] [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]"
-        >
-          <div className="animate-marquee flex w-max group-hover:[animation-play-state:paused]">
-            {looped.map((project, index) => (
-              <ProjectCard key={`${project.title}-${index}`} project={project} />
-            ))}
+          {/* Duplicate controls at the top: reachable without hunting, and the
+              first thing a keyboard user tabs into. */}
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-[0.6875rem] tabular-nums text-dim" aria-live="polite">
+              {String(index + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}
+            </span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => goTo(index - 1)}
+                disabled={atStart}
+                aria-label="Previous project"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-elevated/60 text-muted transition-colors hover:border-lineStrong hover:text-fg disabled:pointer-events-none disabled:opacity-35"
+              >
+                <ArrowLeft aria-hidden className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => goTo(index + 1)}
+                disabled={atEnd}
+                aria-label="Next project"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-elevated/60 text-muted transition-colors hover:border-lineStrong hover:text-fg disabled:pointer-events-none disabled:opacity-35"
+              >
+                <ArrowRight aria-hidden className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
-      )}
 
-      <Container>
-        <p className="mt-4 text-xs text-muted">Hover to pause · projects loop automatically</p>
+        <div
+          className="relative mt-12 sm:mt-14"
+          role="region"
+          aria-roledescription="carousel"
+          aria-label="Project case studies"
+          onKeyDown={(event) => {
+            if (event.key === "ArrowRight") {
+              event.preventDefault();
+              goTo(index + 1);
+            }
+            if (event.key === "ArrowLeft") {
+              event.preventDefault();
+              goTo(index - 1);
+            }
+          }}
+        >
+          {/* Deliberately no data-lenis-prevent here: it would hand this whole
+              area back to native scrolling, so vertical scrolling would jolt
+              every time the pointer crossed the card. Touch swipe still works
+              (Lenis leaves touch alone) and the arrows cover the desktop case. */}
+          <div
+            ref={trackRef}
+            className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain"
+          >
+            {projects.map((project, cardIndex) => (
+              <ProjectCard key={project.slug} project={project} index={cardIndex} total={projects.length} />
+            ))}
+          </div>
+
+          {/* Side arrows, floating clear of the card on wide screens. */}
+          <button
+            type="button"
+            onClick={() => goTo(index - 1)}
+            disabled={atStart}
+            aria-hidden
+            tabIndex={-1}
+            aria-label="Previous project"
+            className={cn(
+              "absolute -left-5 top-1/2 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-bg/85 text-muted backdrop-blur-md transition-all duration-300 hover:border-lineStrong hover:text-fg xl:flex",
+              atStart && "pointer-events-none opacity-0",
+            )}
+          >
+            <ArrowLeft aria-hidden className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => goTo(index + 1)}
+            disabled={atEnd}
+            aria-hidden
+            tabIndex={-1}
+            aria-label="Next project"
+            className={cn(
+              "absolute -right-5 top-1/2 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-bg/85 text-muted backdrop-blur-md transition-all duration-300 hover:border-lineStrong hover:text-fg xl:flex",
+              atEnd && "pointer-events-none opacity-0",
+            )}
+          >
+            <ArrowRight aria-hidden className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Jump straight to a project, and a visual index of how many there are. */}
+        <div className="mt-8 flex flex-wrap items-center gap-2">
+          {projects.map((project, dotIndex) => (
+            <button
+              key={project.slug}
+              type="button"
+              onClick={() => goTo(dotIndex)}
+              aria-label={`Go to ${project.title}`}
+              aria-current={dotIndex === index}
+              style={themeVars(project)}
+              className={cn(
+                "h-1.5 rounded-full transition-all duration-500",
+                dotIndex === index ? "w-10 bg-card" : "w-5 bg-line hover:bg-lineStrong",
+              )}
+            />
+          ))}
+          <span className="ml-3 hidden font-mono text-[0.625rem] uppercase tracking-[0.14em] text-dim sm:inline">
+            Swipe on touch, or use the arrows
+          </span>
+        </div>
       </Container>
     </section>
   );

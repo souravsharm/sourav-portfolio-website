@@ -1,51 +1,100 @@
-import { Github, Linkedin, Mail } from "lucide-react";
-import { Section } from "@/components/layout/Section";
+import { ArrowUpRight, FileText, Github, Linkedin, Mail, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Container } from "@/components/ui/Container";
+import { TextReveal } from "@/components/motion/TextReveal";
+import { Reveal, RevealGroup, RevealItem } from "@/components/motion/Reveal";
 import { CopyEmailButton } from "@/components/ui/CopyEmailButton";
-import { Reveal } from "@/components/motion/Reveal";
 import { site } from "@/content/site";
+
+const channels = [
+  { label: "Email", value: site.email, href: `mailto:${site.email}`, icon: Mail, external: false },
+  { label: "LinkedIn", value: "sourav-sharma", href: site.linkedin, icon: Linkedin, external: true },
+  { label: "GitHub", value: "souravsharm", href: site.github, icon: Github, external: true },
+];
 
 export function Contact() {
   return (
-    <Section
-      id="contact"
-      eyebrow="Contact"
-      title="Let us build something practical."
-      intro="I am open to software engineering, frontend, full-stack, AI-tooling, automation, and freelance MVP opportunities."
-    >
-      <div className="grid gap-5 lg:grid-cols-[1fr_0.9fr]">
-        <Reveal className="rounded-2xl border border-border bg-panel/86 p-6">
-          <h3 className="text-xl font-bold text-foreground">Reach out directly</h3>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
-            If my work looks relevant to your team or project, feel free to reach out by email or connect through LinkedIn/GitHub.
+    <section id="contact" className="relative scroll-mt-24 overflow-hidden border-t border-line py-20 sm:py-24 lg:py-28">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[26rem] bg-[radial-gradient(ellipse_60%_100%_at_50%_100%,rgb(var(--accent)/0.14),transparent_70%)]"
+      />
+
+      <Container>
+        <div className="flex items-center gap-4">
+          <span className="eyebrow text-accent">05</span>
+          <span className="h-px w-8 bg-lineStrong" aria-hidden />
+          <span className="eyebrow">Contact</span>
+        </div>
+
+        <TextReveal
+          as="h2"
+          text="If the fit looks right, let's talk."
+          highlight="let's talk."
+          className="mt-8 max-w-4xl font-display text-display-lg font-semibold text-fg"
+        />
+
+        <Reveal delay={0.12}>
+          <p className="mt-7 max-w-measure text-lead text-muted">
+            The fastest way to reach me is email — I reply to every genuine message. Happy to walk through any of the
+            projects above, share more code, or talk about what your team is building.
           </p>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <Button href={`mailto:${site.email}`} variant="primary" icon={<Mail aria-hidden className="h-4 w-4" />}>
-              Email Me
+        </Reveal>
+
+        <Reveal delay={0.2}>
+          <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Button
+              href={`mailto:${site.email}`}
+              variant="primary"
+              size="lg"
+              icon={<ArrowUpRight aria-hidden className="h-4 w-4" />}
+            >
+              {site.email}
             </Button>
-            <CopyEmailButton />
-            <Button href={site.linkedin} external icon={<Linkedin aria-hidden className="h-4 w-4" />}>
-              LinkedIn
-            </Button>
-            <Button href={site.github} external icon={<Github aria-hidden className="h-4 w-4" />}>
-              GitHub
+            <CopyEmailButton className="min-h-[3.25rem] px-7" />
+            <Button href={site.resumePath} newTab size="lg" icon={<ArrowUpRight aria-hidden className="h-4 w-4" />}>
+              <FileText aria-hidden className="mr-1 inline h-4 w-4 align-[-3px]" />
+              Open résumé
             </Button>
           </div>
         </Reveal>
-        <Reveal delay={0.1} className="rounded-2xl border border-border bg-background/72 p-6">
-          <h3 className="text-xl font-bold text-foreground">Contact details</h3>
-          <dl className="mt-5 grid gap-4 text-sm">
-            <div>
-              <dt className="text-muted">Email</dt>
-              <dd className="selectable mt-1 font-medium text-foreground">{site.email}</dd>
-            </div>
-            <div>
-              <dt className="text-muted">Location</dt>
-              <dd className="mt-1 font-medium text-foreground">{site.location}</dd>
-            </div>
-          </dl>
+
+        <RevealGroup className="mt-16 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-3">
+          {channels.map((channel) => (
+            <RevealItem key={channel.label}>
+              <a
+                href={channel.href}
+                target={channel.external ? "_blank" : undefined}
+                rel={channel.external ? "noopener noreferrer" : undefined}
+                className="group flex h-full flex-col justify-between gap-8 bg-surface/70 p-6 transition-colors duration-300 hover:bg-elevated"
+              >
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-line bg-bg/50 text-muted transition-colors group-hover:border-accent/50 group-hover:text-accent">
+                  <channel.icon aria-hidden className="h-4 w-4" />
+                </span>
+                <span>
+                  <span className="block font-mono text-[0.625rem] uppercase tracking-[0.14em] text-dim">
+                    {channel.label}
+                  </span>
+                  <span className="mt-1.5 flex items-center gap-1.5 break-all text-[0.875rem] text-fg">
+                    {channel.value}
+                    <ArrowUpRight
+                      aria-hidden
+                      className="h-3.5 w-3.5 shrink-0 text-dim transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    />
+                  </span>
+                </span>
+              </a>
+            </RevealItem>
+          ))}
+        </RevealGroup>
+
+        <Reveal delay={0.1}>
+          <p className="mt-8 flex items-center gap-2 font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-dim">
+            <MapPin aria-hidden className="h-3.5 w-3.5" />
+            {site.location}
+          </p>
         </Reveal>
-      </div>
-    </Section>
+      </Container>
+    </section>
   );
 }
