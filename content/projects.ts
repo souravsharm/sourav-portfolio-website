@@ -127,39 +127,44 @@ export const projects: Project[] = [
       font: "var(--font-serif)",
     },
   },
-  {
-    slug: "ckd-prognosis",
-    title: "Predicting kidney disease progression",
-    kind: "Published research · Honours thesis",
-    year: "2024",
-    summary: "A model that predicts kidney failure risk and — just as importantly — explains why it made each call.",
-    problem: "A clinical prediction is useless if the doctor cannot see the reasoning behind it.",
-    build: [
-      "Built the Python preprocessing pipeline: normalisation, outlier detection, incomplete records.",
-      "Corrected the class imbalance with SMOTE, so 'healthy' could not win by default.",
-      "Applied SHAP and LIME so each prediction ships with the features that drove it.",
-    ],
-    outcome: "Accuracy rose from 86% to 94%, F1-score up 8%. Peer reviewed and published by Elsevier.",
-    metrics: [
-      { value: "94%", label: "accuracy, from 86%" },
-      { value: "+8%", label: "F1-score" },
-      { value: "DOI", label: "peer reviewed" },
-    ],
-    tech: ["Python", "pandas", "NumPy", "scikit-learn", "SMOTE", "SHAP", "LIME"],
-    areas: ["Data & AI", "Python"],
-    links: [{ label: "Read the published paper", href: "https://doi.org/10.1016/j.cmpbup.2024.100160", kind: "paper" }],
-    visual: "ml",
-    theme: {
-      // Clinical teal.
-      accent: "90 214 190",
-      accentAlt: "132 196 255",
-      left: "10 16 17",
-      right: "12 27 27",
-      text: "226 243 239",
-      muted: "150 182 176",
-      font: "var(--font-plex)",
-    },
+ {
+  slug: "ckd-prognosis",
+  title: "Predicting kidney failure from lab trends",
+  kind: "Honours thesis — solo research",
+  year: "2024",
+  summary:
+    "A kidney-failure model that watches how a patient's function moves over time — not just where it sits on the day of the test.",
+  problem:
+    "The clinical tool doctors already use scores risk from a single snapshot, so a patient in fast decline can still read as low-risk.",
+  build: [
+    "Engineered eGFR trend and average from raw visit data, recomputed with the clinical CKD-EPI formula.",
+    "Tuned Decision Tree, Random Forest, XGBoost and LightGBM with 5-fold CV and SMOTE for class imbalance.",
+    "Benchmarked against three published studies on the same problem.",
+  ],
+  outcome:
+    "Beat every published benchmark I compared against (99.8% ROC-AUC vs. 88–98% in prior work). A related Japanese dataset I sourced during an earlier stage of this research was later used in a peer-reviewed publication by my research group.",
+  metrics: [
+    { value: "99.8%", label: "ROC-AUC, kidney failure model" },
+    { value: "98%+", label: "F1, both models" },
+    { value: "Solo", label: "thesis, Deakin Honours" },
+  ],
+  tech: ["Python", "pandas", "scikit-learn", "XGBoost", "LightGBM", "SMOTE"],
+  areas: ["Data & AI", "Python"],
+  links: [
+    { label: "View source on GitHub", href: "https://github.com/souravsharm/CKD-detection-using-ML", kind: "code" },
+    { label: "Related publication (Elsevier)", href: "https://doi.org/10.1016/j.cmpbup.2024.100160", kind: "paper" },
+  ],
+  visual: "ml",
+  theme: {
+    accent: "90 214 190",
+    accentAlt: "132 196 255",
+    left: "10 16 17",
+    right: "12 27 27",
+    text: "226 243 239",
+    muted: "150 182 176",
+    font: "var(--font-plex)",
   },
+},
   {
     slug: "trip-tracker",
     title: "Travel Tracker",
