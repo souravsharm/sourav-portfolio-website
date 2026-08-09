@@ -37,21 +37,52 @@ function useHaloPositions(count: number, inner: number, outer: number) {
   }, [count, inner, outer]);
 }
 
-type CoreProps = { progress: RefObject<number> };
+type CoreProps = { progress: RefObject<number>; compact?: boolean };
+
+/**
+ * Pulls the camera back far enough that the object stays whole in any viewport.
+ *
+ * A PerspectiveCamera's fov is *vertical*, so a portrait phone has a very
+ * narrow horizontal field. At a fixed distance the object then overflows
+ * sideways and what is left on screen is an unreadable tangle of lines rather
+ * than a recognisable shape. Fitting against whichever axis is tighter solves
+ * that here and in narrow desktop windows alike.
+ */
+function CameraFit({ radius = 2.8 }: { radius?: number }) {
+  // Last aspect the camera was solved for. Reading the camera off the frame
+  // state rather than out of useThree keeps this a plain three.js mutation
+  // instead of writing through a hook's return value.
+  const solvedFor = useRef(0);
+
+  useFrame(({ camera, size }) => {
+    const aspect = size.width / Math.max(size.height, 1);
+    if (Math.abs(aspect - solvedFor.current) < 0.001) return;
+    solvedFor.current = aspect;
+
+    const perspective = camera as THREE.PerspectiveCamera;
+    const fov = (perspective.fov * Math.PI) / 180;
+    const fitVertical = radius / Math.tan(fov / 2);
+    const fitHorizontal = fitVertical / Math.max(aspect, 0.0001);
+    perspective.position.z = Math.max(fitVertical, fitHorizontal) * 1.02;
+    perspective.updateProjectionMatrix();
+  });
+
+  return null;
+}
 
 /**
  * The hero object: a matte solid core inside two counter-rotating wireframe
  * shells, wrapped in a particle halo. Scroll drives rotation and depth; the
  * pointer adds a small parallax tilt.
  */
-function Core({ progress }: CoreProps) {
+function Core({ progress, compact = false }: CoreProps) {
   const group = useRef<THREE.Group>(null);
   const innerShell = useRef<THREE.LineSegments>(null);
   const outerShell = useRef<THREE.LineSegments>(null);
   const halo = useRef<THREE.Points>(null);
   const pointer = usePointerParallax();
 
-  const haloPositions = useHaloPositions(720, 3.1, 5.4);
+  const haloPositions = useHaloPositions(compact ? 340 : 720, 3.1, 5.4);
 
   const geometries = useMemo(() => {
     const solid = new THREE.IcosahedronGeometry(1.18, 1);
@@ -135,13 +166,14 @@ function Core({ progress }: CoreProps) {
   );
 }
 
-export default function HeroScene({ progress }: CoreProps) {
+export default function HeroScene({ progress, compact = false }: CoreProps) {
   return (
     <Canvas
-      // Cap DPR: the scene is soft-focus decoration, so retina pixels buy
-      // nothing here but cost a lot of fill rate.
-      dpr={[1, 1.6]}
-      camera={{ position: [0, 0, 8], fov: 42 }}
+      // Cap DPR: this is soft-focus decoration, so retina pixels buy nothing
+      // here but cost a lot of fill rate — and fill rate is the scarce
+      // resource on a phone, hence the lower ceiling there.
+      dpr={compact ? [1, 1.25] : [1, 1.6]}
+      camera={{ position: [0, 0, 9], fov: 42 }}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       style={{ pointerEvents: "none" }}
     >
@@ -149,7 +181,8 @@ export default function HeroScene({ progress }: CoreProps) {
       <pointLight position={[5, 4, 6]} intensity={140} distance={26} decay={2} color="#5CA8FF" />
       <pointLight position={[-6, -2, 3]} intensity={95} distance={24} decay={2} color="#9682FF" />
       <pointLight position={[0, 5, -4]} intensity={55} distance={22} decay={2} color="#4EE0C8" />
-      <Core progress={progress} />
+      <CameraFit />
+      <Core progress={progress} compact={compact} />
     </Canvas>
   );
 }

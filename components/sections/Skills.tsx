@@ -40,11 +40,17 @@ function LevelDots({ level, matched = true }: { level: number; matched?: boolean
   );
 }
 
-/** Static stand-in for the cloud: the same words, laid out flat. */
+/**
+ * Static stand-in for the cloud: the same words, laid out flat.
+ *
+ * Self-sizing on purpose. It used to inherit the canvas's fixed height, and
+ * once the words wrapped past that they spilled out of the box and landed on
+ * top of the filter chips above and the copy below.
+ */
 function CloudFallback({ activeRole }: { activeRole: RoleId | null }) {
   return (
-    <div className="flex h-full w-full flex-wrap content-center items-center justify-center gap-x-3 gap-y-2 p-6">
-      {allSkills.slice(0, 30).map((skill) => {
+    <div className="flex w-full flex-wrap items-center justify-center gap-x-3 gap-y-2 px-4 py-10">
+      {allSkills.slice(0, 24).map((skill) => {
         const matched = activeRole === null || skill.roles.includes(activeRole);
         return (
           <span
@@ -162,9 +168,15 @@ export function Skills() {
             </dl>
           </Reveal>
 
-          <div className="order-1 h-[16rem] w-full sm:h-[19rem] lg:order-2 lg:h-[22rem]">
+          {/* Hidden on phones: the cloud is decoration, and every word in it
+              already appears in the grid below. The height lives on the canvas
+              wrapper rather than here, so the fallback can size to its content
+              instead of overflowing a fixed box. */}
+          <div className="order-1 hidden w-full sm:block lg:order-2">
             <Scene3D fallback={<CloudFallback activeRole={activeRole} />}>
-              <SkillCloud skills={allSkills} activeRole={activeRole} progress={progress} />
+              <div className="h-[19rem] w-full lg:h-[22rem]">
+                <SkillCloud skills={allSkills} activeRole={activeRole} progress={progress} />
+              </div>
             </Scene3D>
           </div>
         </div>

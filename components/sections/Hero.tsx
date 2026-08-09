@@ -10,6 +10,7 @@ import { StatusPill } from "@/components/ui/Tag";
 import { Scene3D } from "@/components/three/Scene3D";
 import { site } from "@/content/site";
 import { useScrollProgress } from "@/lib/useScrollProgress";
+import { useIsDesktop } from "@/lib/useSafeReducedMotion";
 
 // WebGL never runs on the server, and keeping three out of the initial bundle
 // means the text above the fold paints without waiting for it.
@@ -40,16 +41,21 @@ function CoreFallback() {
 export function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
   const progress = useScrollProgress(sectionRef, { start: "top top", end: "bottom top" });
+  const isDesktop = useIsDesktop();
 
   return (
     <section id="top" ref={sectionRef} className="relative min-h-[100svh] overflow-hidden">
-      {/* The scene sits behind the copy on small screens and beside it on large. */}
+      {/* The scene sits behind the copy on small screens and beside it on large.
+          minWidth is dropped to 360 so phones get the real object rather than
+          the CSS stand-in, which read as a smudge behind the headline. Thin
+          wireframe lines at 40% do not fight the text the way a blurred
+          gradient did. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 z-0 opacity-70 sm:opacity-100 lg:left-[42%]"
+        className="pointer-events-none absolute inset-0 z-0 opacity-40 sm:opacity-90 lg:left-[42%] lg:opacity-100"
       >
-        <Scene3D fallback={<CoreFallback />}>
-          <HeroScene progress={progress} />
+        <Scene3D fallback={<CoreFallback />} minWidth={360}>
+          <HeroScene progress={progress} compact={!isDesktop} />
         </Scene3D>
       </div>
 
